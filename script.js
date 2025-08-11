@@ -534,8 +534,12 @@ async function startOptimization() {
     setOptimizationLoading(true);
     
     try {
-        // 调用后端API
-        const response = await fetch('/api/optimize', {
+        // 调用后端API（适配Vercel部署）
+        const apiUrl = window.location.hostname === 'localhost' 
+            ? '/api/optimize' 
+            : '/api/optimize';
+        
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

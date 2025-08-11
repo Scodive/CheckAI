@@ -24,24 +24,32 @@
 
 ## 🚀 快速开始
 
-### 方法1：一键启动（推荐）
+### 方法1：Vercel部署（推荐）
 ```bash
+# 安装Vercel CLI
+npm i -g vercel
+
+# 部署到Vercel
+vercel --prod
+```
+
+### 方法2：本地开发
+```bash
+# 一键启动
 python3 run.py
-```
 
-### 方法2：手动启动
-1. 安装依赖：
-```bash
+# 或手动启动
 pip install -r requirements.txt
-```
-
-2. 启动后端服务：
-```bash
 python3 app.py
 ```
 
-3. 访问网站：
-打开浏览器访问 `http://localhost:5000`
+### 方法3：GitHub + Vercel自动部署
+1. Fork此仓库到您的GitHub
+2. 在[Vercel](https://vercel.com)中导入项目
+3. 设置`GEMINI_API_KEY`环境变量
+4. 自动部署完成！
+
+详细部署指南请查看 [DEPLOY.md](./DEPLOY.md)
 
 ## 📋 系统要求
 
