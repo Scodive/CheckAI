@@ -17,7 +17,9 @@
   - 最低50字符检测要求
 
 ### 🎨 AI率优化功能
-- **智能文本优化**：使用Gemini 2.5 API进行文本人性化处理
+- **独立优化页面**：专门的文本优化工作区，无需后端服务
+- **直接API调用**：前端直接调用Gemini 2.5 API，避免部署问题
+- **智能文本优化**：使用专业提示词进行文本人性化处理
 - **详细改进分析**：提供具体的优化改进统计
 - **一键操作**：复制、下载优化后的文本
 - **实时统计**：字符数、词数等文本统计信息
@@ -68,18 +70,24 @@ MODEL_NAME = 'gemini-2.5-flash-lite-preview-06-17'
 
 ## 📖 使用方法
 
-### 1. AI检测
+### 1. AI检测（主页面）
 1. 选择输入方式（文本输入或文件上传）
 2. 输入或上传要检测的内容（至少50字符）
 3. 点击"开始检测"
 4. 查看详细的检测结果和分类分析
 
-### 2. AI率优化
-1. 完成AI检测后，点击"降低AI率"
-2. 在优化界面中确认或修改原始文本
-3. 点击"开始优化"等待处理
-4. 查看优化结果和改进统计
-5. 复制或下载优化后的文本
+### 2. AI率优化（独立页面）
+1. 访问优化页面：点击导航栏"AI优化"或主页"直接优化文本"
+2. 配置Gemini API Key（已预设，可修改）
+3. 粘贴需要优化的文本内容（至少50字符）
+4. 点击"开始优化"等待AI处理
+5. 查看优化结果和改进统计
+6. 复制或下载优化后的文本
+
+### 3. 快速优化流程
+- 直接访问 `optimize.html` 页面
+- 无需后端服务，纯前端实现
+- 支持离线使用（需要网络调用API）
 
 ## 🛠️ 技术架构
 
@@ -103,13 +111,19 @@ MODEL_NAME = 'gemini-2.5-flash-lite-preview-06-17'
 
 ```
 CheckAI/
-├── index.html          # 主页面
-├── styles.css          # 样式文件
-├── script.js           # 前端JavaScript
-├── app.py             # Flask后端服务
-├── requirements.txt   # Python依赖
-├── run.py            # 启动脚本
-└── README.md         # 项目说明
+├── index.html              # 主页面
+├── optimize.html           # AI优化独立页面
+├── styles.css              # 样式文件
+├── script.js               # 前端JavaScript
+├── app.py                  # Flask后端服务（本地开发用）
+├── api/
+│   └── optimize.py         # Vercel无服务器函数
+├── requirements.txt        # Python依赖（本地开发）
+├── requirements-vercel.txt # Vercel部署依赖
+├── vercel.json            # Vercel配置文件
+├── run.py                 # 本地启动脚本
+├── DEPLOY.md              # 部署指南
+└── README.md              # 项目说明
 ```
 
 ## 🔮 未来规划

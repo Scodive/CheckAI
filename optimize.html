@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI文本优化 - Paper Check</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* 优化页面专用样式 */
+        .optimize-page {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem 0;
+        }
+        
+        .optimize-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        .optimize-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+        
+        .optimize-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .optimize-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .optimize-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .api-config {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .api-config h3 {
+            margin-bottom: 1rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .api-input {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .api-input input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .api-input input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+        }
+        
+        .status-indicator.ready {
+            background: #22c55e;
+        }
+        
+        .optimize-workspace {
+            padding: 2rem;
+        }
+        
+        .text-panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .text-panel {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .panel-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .panel-stats {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .panel-content {
+            padding: 1rem;
+        }
+        
+        .panel-content textarea {
+            width: 100%;
+            height: 300px;
+            border: none;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            padding: 0.5rem;
+        }
+        
+        .panel-content textarea:focus {
+            outline: none;
+        }
+        
+        .panel-content textarea[readonly] {
+            background: #f9fafb;
+            color: #374151;
+        }
+        
+        .control-panel {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .optimize-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 3rem;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+        
+        .optimize-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.6);
+        }
+        
+        .optimize-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .optimize-btn.loading i {
+            animation: spin 1s linear infinite;
+        }
+        
+        .result-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn.primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .action-btn.secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-1px);
+        }
+        
+        .improvements-section {
+            background: #f0f9ff;
+            border: 2px solid #0ea5e9;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .improvements-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #0c4a6e;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .improvement-list {
+            display: grid;
+            gap: 0.75rem;
+        }
+        
+        .improvement-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+        }
+        
+        .improvement-icon {
+            color: #10b981;
+            font-size: 1.1rem;
+        }
+        
+        .back-link {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .text-panels {
+                grid-template-columns: 1fr;
+            }
+            
+            .api-input {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .result-actions {
+                flex-direction: column;
+            }
+            
+            .back-link {
+                position: static;
+                margin-bottom: 2rem;
+                align-self: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="optimize-page">
+        <a href="index.html" class="back-link">
+            <i class="fas fa-arrow-left"></i>
+            返回主页
+        </a>
+        
+        <div class="optimize-container">
+            <div class="optimize-header">
+                <h1><i class="fas fa-magic"></i> AI文本优化</h1>
+                <p>使用Gemini 2.5降低文本AI检测率，提升人性化程度</p>
+            </div>
+            
+            <div class="optimize-card">
+                <!-- API配置区域 -->
+                <div class="api-config">
+                    <h3><i class="fas fa-key"></i> API配置</h3>
+                    <div class="api-input">
+                        <input type="password" id="apiKey" placeholder="请输入您的Gemini API Key" value="AIzaSyDy9pYAEW7e2Ewk__9TCHAD5X_G1VhCtVw">
+                        <div class="api-status">
+                            <div class="status-indicator" id="apiStatus"></div>
+                            <span id="apiStatusText">未配置</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 工作区域 -->
+                <div class="optimize-workspace">
+                    <div class="text-panels">
+                        <!-- 原始文本 -->
+                        <div class="text-panel">
+                            <div class="panel-header">
+                                <div class="panel-title">
+                                    <i class="fas fa-file-text"></i>
+                                    原始文本
+                                </div>
+                                <div class="panel-stats">
+                                    <span id="originalStats">0 字符 | 0 词</span>
+                                </div>
+                            </div>
+                            <div class="panel-content">
+                                <textarea id="originalText" placeholder="请粘贴需要优化的文本内容..."></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- 优化文本 -->
+                        <div class="text-panel">
+                            <div class="panel-header">
+                                <div class="panel-title">
+                                    <i class="fas fa-sparkles"></i>
+                                    优化结果
+                                </div>
+                                <div class="panel-stats">
+                                    <span id="optimizedStats">0 字符 | 0 词</span>
+                                </div>
+                            </div>
+                            <div class="panel-content">
+                                <textarea id="optimizedText" placeholder="优化结果将显示在这里..." readonly></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 控制面板 -->
+                    <div class="control-panel">
+                        <button id="optimizeBtn" class="optimize-btn" disabled>
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                            开始优化
+                        </button>
+                        
+                        <div class="result-actions" id="resultActions" style="display: none;">
+                            <button class="action-btn primary" id="copyBtn">
+                                <i class="fas fa-copy"></i>
+                                复制结果
+                            </button>
+                            <button class="action-btn secondary" id="downloadBtn">
+                                <i class="fas fa-download"></i>
+                                下载文本
+                            </button>
+                            <button class="action-btn secondary" id="newOptimizeBtn">
+                                <i class="fas fa-plus"></i>
+                                新优化
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 改进总结 -->
+                    <div class="improvements-section" id="improvementsSection" style="display: none;">
+                        <div class="improvements-title">
+                            <i class="fas fa-chart-line"></i>
+                            优化改进
+                        </div>
+                        <div class="improvement-list" id="improvementList">
+                            <!-- 改进项目将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM元素
+        const apiKeyInput = document.getElementById('apiKey');
+        const apiStatus = document.getElementById('apiStatus');
+        const apiStatusText = document.getElementById('apiStatusText');
+        const originalTextArea = document.getElementById('originalText');
+        const optimizedTextArea = document.getElementById('optimizedText');
+        const originalStats = document.getElementById('originalStats');
+        const optimizedStats = document.getElementById('optimizedStats');
+        const optimizeBtn = document.getElementById('optimizeBtn');
+        const resultActions = document.getElementById('resultActions');
+        const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const newOptimizeBtn = document.getElementById('newOptimizeBtn');
+        const improvementsSection = document.getElementById('improvementsSection');
+        const improvementList = document.getElementById('improvementList');
+
+        // Gemini API配置
+        const MODEL_NAME = 'gemini-2.5-flash-lite-preview-06-17';
+        
+        // 优化提示词模板
+        const OPTIMIZE_PROMPT = `Assist me in revising the following passage to make it more human-like and reduce AI detection probability. Follow these requirements strictly:
+
+Sentence Structure: Keep every sentence with a clear subject. Avoid long or complex sentences. Use short, direct sentences whenever possible.
+
+Vocabulary Simplification: Replace all transition words and connectors with the most basic and commonly used ones (e.g., "but", "and", "so"). Avoid rare or overly academic words.
+
+Synonym Replacement: Substitute uncommon or AI-typical words with more natural and frequently used alternatives while keeping the original meaning. Maintain consistent tone and style across the text.
+
+Voice & Style: Convert passive voice into active voice where appropriate. Balance between formal academic writing and conversational expression. Inject occasional human-like touches such as first-person phrases ("I think", "It seems", "Perhaps") and mild uncertainty markers.
+
+Phrase Expansion & Division: Break down overly long sentences into multiple short ones. Expand short phrases slightly to improve logical flow.
+
+Remove Formulaic AI Phrases: Avoid AI-style endings like "In conclusion" or "Overall". If a transition is needed, use basic connectors such as "also", "therefore", "at the same time".
+
+Target Length: Keep the output around {wordCount} words.
+
+Output Requirements:
+- Present the rewritten passage in one block without explanations.
+- Do not summarize or comment on the text.
+- Preserve the meaning but improve readability and naturalness.
+
+Text to Revise:
+{text}`;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEventListeners();
+            checkApiKey();
+            updateStats();
+        });
+
+        // 事件监听器
+        function initializeEventListeners() {
+            apiKeyInput.addEventListener('input', checkApiKey);
+            originalTextArea.addEventListener('input', handleTextInput);
+            optimizeBtn.addEventListener('click', startOptimization);
+            copyBtn.addEventListener('click', copyResult);
+            downloadBtn.addEventListener('click', downloadResult);
+            newOptimizeBtn.addEventListener('click', resetOptimization);
+        }
+
+        // 检查API Key
+        function checkApiKey() {
+            const apiKey = apiKeyInput.value.trim();
+            if (apiKey && apiKey.length > 20) {
+                apiStatus.classList.add('ready');
+                apiStatusText.textContent = '已配置';
+                checkOptimizeButton();
+            } else {
+                apiStatus.classList.remove('ready');
+                apiStatusText.textContent = '未配置';
+                optimizeBtn.disabled = true;
+            }
+        }
+
+        // 处理文本输入
+        function handleTextInput() {
+            updateStats();
+            checkOptimizeButton();
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            const originalText = originalTextArea.value;
+            const optimizedText = optimizedTextArea.value;
+            
+            const originalChars = originalText.length;
+            const originalWords = originalText.split(/\s+/).filter(w => w.length > 0).length;
+            originalStats.textContent = `${originalChars} 字符 | ${originalWords} 词`;
+            
+            const optimizedChars = optimizedText.length;
+            const optimizedWords = optimizedText.split(/\s+/).filter(w => w.length > 0).length;
+            optimizedStats.textContent = `${optimizedChars} 字符 | ${optimizedWords} 词`;
+        }
+
+        // 检查优化按钮状态
+        function checkOptimizeButton() {
+            const hasApiKey = apiKeyInput.value.trim().length > 20;
+            const hasText = originalTextArea.value.trim().length >= 50;
+            optimizeBtn.disabled = !(hasApiKey && hasText);
+        }
+
+        // 开始优化
+        async function startOptimization() {
+            const apiKey = apiKeyInput.value.trim();
+            const text = originalTextArea.value.trim();
+            
+            if (!apiKey || !text) {
+                showNotification('请配置API Key并输入文本', 'error');
+                return;
+            }
+
+            if (text.length < 50) {
+                showNotification('文本长度至少需要50个字符', 'error');
+                return;
+            }
+
+            // 设置加载状态
+            setOptimizeLoading(true);
+            
+            try {
+                const wordCount = text.split(/\s+/).length;
+                const prompt = OPTIMIZE_PROMPT.replace('{text}', text).replace('{wordCount}', wordCount);
+                
+                const result = await callGeminiAPI(apiKey, prompt);
+                
+                if (result.success) {
+                    optimizedTextArea.value = result.text;
+                    updateStats();
+                    showResultActions();
+                    showImprovements(text, result.text);
+                    showNotification('优化完成！', 'success');
+                } else {
+                    showNotification(result.error, 'error');
+                }
+                
+            } catch (error) {
+                console.error('优化失败:', error);
+                showNotification('优化过程中发生错误', 'error');
+            } finally {
+                setOptimizeLoading(false);
+            }
+        }
+
+        // 调用Gemini API
+        async function callGeminiAPI(apiKey, prompt) {
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: prompt
+                            }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            topK: 40,
+                            topP: 0.95,
+                            maxOutputTokens: 2048
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates.length > 0) {
+                    const text = data.candidates[0].content.parts[0].text;
+                    return { success: true, text: text.trim() };
+                } else {
+                    throw new Error('API返回数据格式错误');
+                }
+                
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        // 设置优化加载状态
+        function setOptimizeLoading(loading) {
+            if (loading) {
+                optimizeBtn.classList.add('loading');
+                optimizeBtn.innerHTML = '<i class="fas fa-spinner"></i> 优化中...';
+                optimizeBtn.disabled = true;
+            } else {
+                optimizeBtn.classList.remove('loading');
+                optimizeBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> 开始优化';
+                checkOptimizeButton();
+            }
+        }
+
+        // 显示结果操作按钮
+        function showResultActions() {
+            resultActions.style.display = 'flex';
+        }
+
+        // 显示改进总结
+        function showImprovements(originalText, optimizedText) {
+            const originalStats = getTextAnalysis(originalText);
+            const optimizedStats = getTextAnalysis(optimizedText);
+            
+            const improvements = [];
+            
+            if (optimizedStats.avgSentenceLength < originalStats.avgSentenceLength) {
+                improvements.push(`平均句长从 ${originalStats.avgSentenceLength.toFixed(1)} 词缩短至 ${optimizedStats.avgSentenceLength.toFixed(1)} 词`);
+            }
+            
+            if (optimizedStats.complexWords < originalStats.complexWords) {
+                improvements.push(`复杂词汇从 ${originalStats.complexWords} 个减少至 ${optimizedStats.complexWords} 个`);
+            }
+            
+            if (optimizedStats.passiveVoice < originalStats.passiveVoice) {
+                improvements.push(`被动语态从 ${originalStats.passiveVoice} 处减少至 ${optimizedStats.passiveVoice} 处`);
+            }
+            
+            if (optimizedStats.aiPhrases < originalStats.aiPhrases) {
+                improvements.push(`AI常用短语从 ${originalStats.aiPhrases} 个减少至 ${optimizedStats.aiPhrases} 个`);
+            }
+            
+            if (improvements.length === 0) {
+                improvements.push('文本已进行人性化优化，提升自然度和可读性');
+            }
+            
+            // 显示改进列表
+            improvementList.innerHTML = '';
+            improvements.forEach(improvement => {
+                const item = document.createElement('div');
+                item.className = 'improvement-item';
+                item.innerHTML = `
+                    <div class="improvement-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div>${improvement}</div>
+                `;
+                improvementList.appendChild(item);
+            });
+            
+            improvementsSection.style.display = 'block';
+        }
+
+        // 文本分析
+        function getTextAnalysis(text) {
+            const words = text.split(/\s+/).filter(w => w.length > 0);
+            const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+            
+            const avgSentenceLength = words.length / sentences.length || 0;
+            const complexWords = words.filter(w => w.length > 6).length;
+            
+            // 简单的被动语态检测
+            const passiveIndicators = ['被', 'was', 'were', 'is', 'are', 'been', 'being'];
+            const passiveVoice = passiveIndicators.reduce((count, indicator) => {
+                return count + (text.toLowerCase().match(new RegExp(indicator, 'g')) || []).length;
+            }, 0);
+            
+            // AI常用短语检测
+            const aiPhrases = ['总之', '综上所述', '总的来说', 'in conclusion', 'overall', 'furthermore', 'moreover'];
+            const aiPhrasesCount = aiPhrases.reduce((count, phrase) => {
+                return count + (text.toLowerCase().match(new RegExp(phrase, 'g')) || []).length;
+            }, 0);
+            
+            return {
+                avgSentenceLength,
+                complexWords,
+                passiveVoice,
+                aiPhrases: aiPhrasesCount
+            };
+        }
+
+        // 复制结果
+        function copyResult() {
+            const text = optimizedTextArea.value;
+            if (!text) {
+                showNotification('没有可复制的内容', 'warning');
+                return;
+            }
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('已复制到剪贴板', 'success');
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                }, 2000);
+            }).catch(() => {
+                showNotification('复制失败', 'error');
+            });
+        }
+
+        // 下载结果
+        function downloadResult() {
+            const text = optimizedTextArea.value;
+            if (!text) {
+                showNotification('没有可下载的内容', 'warning');
+                return;
+            }
+            
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `优化文本_${new Date().toISOString().slice(0, 10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('文件下载已开始', 'success');
+        }
+
+        // 重置优化
+        function resetOptimization() {
+            originalTextArea.value = '';
+            optimizedTextArea.value = '';
+            updateStats();
+            resultActions.style.display = 'none';
+            improvementsSection.style.display = 'none';
+            checkOptimizeButton();
+        }
+
+        // 通知系统
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                background: ${getNotificationColor(type)};
+                color: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                z-index: 10000;
+                font-weight: 500;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        function getNotificationColor(type) {
+            const colors = {
+                'info': '#3b82f6',
+                'success': '#10b981',
+                'warning': '#f59e0b',
+                'error': '#ef4444'
+            };
+            return colors[type] || '#3b82f6';
+        }
+
+        // 添加动画样式
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
