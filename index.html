@@ -427,31 +427,50 @@
 
         // Gemini API配置
         const MODEL_NAME = 'gemini-2.5-flash-lite-preview-06-17';
-        
         // 优化提示词模板
-        const OPTIMIZE_PROMPT = `Assist me in revising the following passage to make it more human-like and reduce AI detection probability. Follow these requirements strictly:
+        const OPTIMIZE_PROMPT = `
+Please revise the following passage to reduce AI detection probability while keeping it clear, coherent, and suitable for academic or formal narrative writing. Follow these rules strictly:
 
-Sentence Structure: Keep every sentence with a clear subject. Avoid long or complex sentences. Use short, direct sentences whenever possible.
+1. Pre-reading & Structure: 
+   - Read the whole passage first to understand its meaning and tone.
+   - Identify the main theme sentences and supporting details.
+   - Rearrange the order of sentences if it improves clarity or flow.
 
-Vocabulary Simplification: Replace all transition words and connectors with the most basic and commonly used ones (e.g., "but", "and", "so"). Avoid rare or overly academic words.
+2. Sentence Length Balance: 
+   - Avoid overly long or complex sentences.
+   - Also avoid chopping into too many short, choppy ones.
+   - Combine related short sentences when possible to keep the narrative smooth.
 
-Synonym Replacement: Substitute uncommon or AI-typical words with more natural and frequently used alternatives while keeping the original meaning. Maintain consistent tone and style across the text.
+3. Vocabulary Adjustment: 
+   - Use natural, frequently used academic vocabulary.
+   - Avoid rare or overly formal words that feel AI-generated.
+   - Keep transitions clear and simple, but varied.
 
-Voice & Style: Convert passive voice into active voice where appropriate. Balance between formal academic writing and conversational expression. Inject occasional human-like touches such as first-person phrases ("I think", "It seems", "Perhaps") and mild uncertainty markers.
+4. Voice & Style: 
+   - Maintain a balance between formal academic style and human storytelling.
+   - Ensure each sentence has a subject.
+   - Avoid repetitive structures.
+   - Use occasional descriptive elements for human-like richness.
 
-Phrase Expansion & Division: Break down overly long sentences into multiple short ones. Expand short phrases slightly to improve logical flow.
+5. Logic & Transitions: 
+   - Use basic but effective transition words ("but", "so", "then", "also", "however", "at the same time") to ensure clear logical flow.
+   - Remove formulaic AI endings like "In conclusion".
 
-Remove Formulaic AI Phrases: Avoid AI-style endings like "In conclusion" or "Overall". If a transition is needed, use basic connectors such as "also", "therefore", "at the same time".
+6. Meaning Preservation: 
+   - Do not remove important details.
+   - It is allowed to slightly rephrase or merge them for better coherence.
 
-Target Length: Keep the output around {wordCount} words.
+7. Target Length: 
+   - Keep the output within ±10% of the original word count.
 
 Output Requirements:
-- Present the rewritten passage in one block without explanations.
-- Do not summarize or comment on the text.
-- Preserve the meaning but improve readability and naturalness.
+- Provide the rewritten text only, no explanations.
+- Keep paragraph structure.
+- Ensure the tone reads as if written by a well-educated human, not by AI.
 
 Text to Revise:
-{text}`;
+{text}
+`;
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
