@@ -540,25 +540,25 @@
         const API_KEY = 'AIzaSyDy9pYAEW7e2Ewk__9TCHAD5X_G1VhCtVw';
         const MODEL_NAME = 'gemini-2.5-flash-lite-preview-06-17';
         
-        // 密码配置系统 - 包含字数限制
+        // 密码配置系统 - 包含单词数限制
         const PASSWORD_CONFIG = {
-            // 1000字限制密码
-            'Trial1000': { limit: 1000, used: 0, description: '试用版 1000字' },
-            'Demo1000A': { limit: 1000, used: 0, description: '演示版 1000字' },
-            'Test1000B': { limit: 1000, used: 0, description: '测试版 1000字' },
+            // 1000词限制密码
+            'Trial1000': { limit: 1000, used: 0, description: '试用版 1000词' },
+            'Demo1000A': { limit: 1000, used: 0, description: '演示版 1000词' },
+            'Test1000B': { limit: 1000, used: 0, description: '测试版 1000词' },
             
-            // 2000字限制密码
-            'Basic2000': { limit: 2000, used: 0, description: '基础版 2000字' },
-            'Start2000A': { limit: 2000, used: 0, description: '入门版 2000字' },
-            'Lite2000B': { limit: 2000, used: 0, description: '轻量版 2000字' },
+            // 2000词限制密码
+            'Basic2000': { limit: 2000, used: 0, description: '基础版 2000词' },
+            'Start2000A': { limit: 2000, used: 0, description: '入门版 2000词' },
+            'Lite2000B': { limit: 2000, used: 0, description: '轻量版 2000词' },
             
-            // 5000字限制密码
-            'Pro5000': { limit: 5000, used: 0, description: '专业版 5000字' },
-            'Plus5000A': { limit: 5000, used: 0, description: '增强版 5000字' },
+            // 5000词限制密码
+            'Pro5000': { limit: 5000, used: 0, description: '专业版 5000词' },
+            'Plus5000A': { limit: 5000, used: 0, description: '增强版 5000词' },
             
-            // 10000字限制密码
-            'Premium10K': { limit: 10000, used: 0, description: '高级版 10000字' },
-            'Ultimate10K': { limit: 10000, used: 0, description: '旗舰版 10000字' }
+            // 10000词限制密码
+            'Premium10K': { limit: 10000, used: 0, description: '高级版 10000词' },
+            'Ultimate10K': { limit: 10000, used: 0, description: '旗舰版 10000词' }
         };
         
         // 优化提示词模板
@@ -648,7 +648,7 @@ Text to Revise:
                     currentConfig = null;
                     authStatus.classList.remove('ready');
                     authStatusText.textContent = '额度已用完';
-                    quotaInfo.textContent = `(${config.used}/${config.limit}字已用完)`;
+                    quotaInfo.textContent = `(${config.used}/${config.limit}词已用完)`;
                     showNotification('该密码额度已用完，请使用其他密码', 'warning');
                 } else {
                     isAuthenticated = true;
@@ -657,8 +657,8 @@ Text to Revise:
                     authStatus.classList.add('ready');
                     authStatusText.textContent = '验证成功';
                     const remaining = config.limit - config.used;
-                    quotaInfo.textContent = `(剩余 ${remaining}/${config.limit} 字)`;
-                    showNotification(`验证成功！${config.description}，剩余${remaining}字`, 'success');
+                    quotaInfo.textContent = `(剩余 ${remaining}/${config.limit} 词)`;
+                    showNotification(`验证成功！${config.description}，剩余${remaining}词`, 'success');
                 }
             } else {
                 isAuthenticated = false;
@@ -692,17 +692,24 @@ Text to Revise:
             optimizedStats.textContent = `${optimizedChars} 字符 | ${optimizedWords} 词`;
         }
 
+        // 计算文本单词数
+        function getWordCount(text) {
+            if (!text || !text.trim()) return 0;
+            return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+        }
+
         // 检查优化按钮状态
         function checkOptimizeButton() {
             const hasAuth = isAuthenticated;
             const text = originalTextArea.value.trim();
             const hasText = text.length >= 50;
+            const wordCount = getWordCount(text);
             
-            // 检查字数是否超过当前密码限制
+            // 检查单词数是否超过当前密码限制
             let exceedsLimit = false;
-            if (currentConfig && text.length > 0) {
+            if (currentConfig && wordCount > 0) {
                 const remaining = currentConfig.limit - currentConfig.used;
-                exceedsLimit = text.length > remaining;
+                exceedsLimit = wordCount > remaining;
             }
             
             optimizeBtn.disabled = !(hasAuth && hasText && !exceedsLimit);
@@ -710,7 +717,7 @@ Text to Revise:
             // 更新按钮文本提示
             if (exceedsLimit) {
                 const remaining = currentConfig.limit - currentConfig.used;
-                optimizeBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> 超出剩余字数限制 (${remaining}字)`;
+                optimizeBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> 超出剩余词数限制 (${remaining}词)`;
             } else if (!hasAuth) {
                 optimizeBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> 请先验证密码';
             } else if (!hasText) {
@@ -734,10 +741,11 @@ Text to Revise:
                 return;
             }
 
-            // 检查字数限制
+            // 检查单词数限制
+            const wordCount = getWordCount(text);
             const remaining = currentConfig.limit - currentConfig.used;
-            if (text.length > remaining) {
-                showNotification(`文本长度(${text.length}字)超过剩余额度(${remaining}字)`, 'error');
+            if (wordCount > remaining) {
+                showNotification(`文本单词数(${wordCount}词)超过剩余额度(${remaining}词)`, 'error');
                 return;
             }
 
@@ -745,19 +753,19 @@ Text to Revise:
             setOptimizeLoading(true);
             
             try {
-                const wordCount = text.split(/\s+/).length;
-                const prompt = OPTIMIZE_PROMPT.replace('{text}', text).replace('{wordCount}', wordCount);
+                const promptWordCount = text.split(/\s+/).length;
+                const prompt = OPTIMIZE_PROMPT.replace('{text}', text).replace('{wordCount}', promptWordCount);
                 
                 const result = await callGeminiAPI(API_KEY, prompt);
                 
                 if (result.success) {
-                    // 更新使用字数
-                    currentConfig.used += text.length;
+                    // 更新使用单词数
+                    currentConfig.used += wordCount;
                     savePasswordUsage();
                     
                     // 更新显示
                     const newRemaining = currentConfig.limit - currentConfig.used;
-                    quotaInfo.textContent = `(剩余 ${newRemaining}/${currentConfig.limit} 字)`;
+                    quotaInfo.textContent = `(剩余 ${newRemaining}/${currentConfig.limit} 词)`;
                     
                     optimizedTextArea.value = result.text;
                     updateStats();
@@ -769,7 +777,7 @@ Text to Revise:
                         // 重新检查按钮状态
                         checkAuthentication();
                     } else {
-                        showNotification(`优化完成！剩余${newRemaining}字额度`, 'success');
+                        showNotification(`优化完成！剩余${newRemaining}词额度`, 'success');
                     }
                 } else {
                     showNotification(result.error, 'error');
