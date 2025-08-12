@@ -200,7 +200,7 @@
             height: 320px;
             border: none;
             resize: vertical;
-            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-family: 'Times New Roman', Times, serif;
             font-size: 0.95rem;
             line-height: 1.6;
             padding: 1rem;
@@ -439,6 +439,7 @@
                         <div class="auth-status">
                             <div class="status-indicator" id="authStatus"></div>
                             <span id="authStatusText">未验证</span>
+                            <span id="quotaInfo" style="margin-left: 10px; font-size: 0.85rem; color: rgba(255, 255, 255, 0.7);"></span>
                         </div>
                     </div>
                 </div>
@@ -522,6 +523,7 @@
         const authPasswordInput = document.getElementById('authPassword');
         const authStatus = document.getElementById('authStatus');
         const authStatusText = document.getElementById('authStatusText');
+        const quotaInfo = document.getElementById('quotaInfo');
         const originalTextArea = document.getElementById('originalText');
         const optimizedTextArea = document.getElementById('optimizedText');
         const originalStats = document.getElementById('originalStats');
@@ -538,19 +540,26 @@
         const API_KEY = 'AIzaSyDy9pYAEW7e2Ewk__9TCHAD5X_G1VhCtVw';
         const MODEL_NAME = 'gemini-2.5-flash-lite-preview-06-17';
         
-        // 随机生成的10个访问密码
-        const VALID_PASSWORDS = [
-            'PaperCheck2024',
-            'AIOptimize789',
-            'TextRefine456',
-            'SmartWrite123',
-            'ContentBoost',
-            'WriteHelper99',
-            'TextMaster88',
-            'AIAssist2024',
-            'OptimizeNow',
-            'SmartText777'
-        ];
+        // 密码配置系统 - 包含字数限制
+        const PASSWORD_CONFIG = {
+            // 1000字限制密码
+            'Trial1000': { limit: 1000, used: 0, description: '试用版 1000字' },
+            'Demo1000A': { limit: 1000, used: 0, description: '演示版 1000字' },
+            'Test1000B': { limit: 1000, used: 0, description: '测试版 1000字' },
+            
+            // 2000字限制密码
+            'Basic2000': { limit: 2000, used: 0, description: '基础版 2000字' },
+            'Start2000A': { limit: 2000, used: 0, description: '入门版 2000字' },
+            'Lite2000B': { limit: 2000, used: 0, description: '轻量版 2000字' },
+            
+            // 5000字限制密码
+            'Pro5000': { limit: 5000, used: 0, description: '专业版 5000字' },
+            'Plus5000A': { limit: 5000, used: 0, description: '增强版 5000字' },
+            
+            // 10000字限制密码
+            'Premium10K': { limit: 10000, used: 0, description: '高级版 10000字' },
+            'Ultimate10K': { limit: 10000, used: 0, description: '旗舰版 10000字' }
+        };
         
         // 优化提示词模板
         const OPTIMIZE_PROMPT = `Assist me in revising the following passage to make it more human-like and reduce AI detection probability. Follow these requirements strictly:
@@ -579,37 +588,40 @@ Text to Revise:
 
         // 全局变量
         let isAuthenticated = false;
+        let currentPassword = '';
+        let currentConfig = null;
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
             initializeEventListeners();
             updateStats();
-            showPasswordHints();
+            loadPasswordUsage();
         });
 
-        // 显示密码提示（开发时使用，生产环境应移除）
-        function showPasswordHints() {
-            console.log('可用密码:', VALID_PASSWORDS);
-            // 在页面底部显示一个小提示
-            const hint = document.createElement('div');
-            hint.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                background: rgba(0, 0, 0, 0.8);
-                color: white;
-                padding: 10px;
-                border-radius: 8px;
-                font-size: 12px;
-                max-width: 200px;
-                z-index: 1000;
-            `;
-            hint.innerHTML = `
-                <strong>测试密码:</strong><br>
-                ${VALID_PASSWORDS.slice(0, 3).join('<br>')}
-                <br><small>等10个密码</small>
-            `;
-            document.body.appendChild(hint);
+        // 加载密码使用情况（从localStorage）
+        function loadPasswordUsage() {
+            const saved = localStorage.getItem('passwordUsage');
+            if (saved) {
+                try {
+                    const usage = JSON.parse(saved);
+                    Object.keys(usage).forEach(password => {
+                        if (PASSWORD_CONFIG[password]) {
+                            PASSWORD_CONFIG[password].used = usage[password] || 0;
+                        }
+                    });
+                } catch (e) {
+                    console.error('加载密码使用记录失败:', e);
+                }
+            }
+        }
+
+        // 保存密码使用情况
+        function savePasswordUsage() {
+            const usage = {};
+            Object.keys(PASSWORD_CONFIG).forEach(password => {
+                usage[password] = PASSWORD_CONFIG[password].used;
+            });
+            localStorage.setItem('passwordUsage', JSON.stringify(usage));
         }
 
         // 事件监听器
@@ -626,15 +638,35 @@ Text to Revise:
         function checkAuthentication() {
             const password = authPasswordInput.value.trim();
             
-            if (VALID_PASSWORDS.includes(password)) {
-                isAuthenticated = true;
-                authStatus.classList.add('ready');
-                authStatusText.textContent = '验证成功';
-                showNotification('验证成功！可以开始使用优化功能', 'success');
+            if (PASSWORD_CONFIG[password]) {
+                const config = PASSWORD_CONFIG[password];
+                
+                // 检查是否已用完
+                if (config.used >= config.limit) {
+                    isAuthenticated = false;
+                    currentPassword = '';
+                    currentConfig = null;
+                    authStatus.classList.remove('ready');
+                    authStatusText.textContent = '额度已用完';
+                    quotaInfo.textContent = `(${config.used}/${config.limit}字已用完)`;
+                    showNotification('该密码额度已用完，请使用其他密码', 'warning');
+                } else {
+                    isAuthenticated = true;
+                    currentPassword = password;
+                    currentConfig = config;
+                    authStatus.classList.add('ready');
+                    authStatusText.textContent = '验证成功';
+                    const remaining = config.limit - config.used;
+                    quotaInfo.textContent = `(剩余 ${remaining}/${config.limit} 字)`;
+                    showNotification(`验证成功！${config.description}，剩余${remaining}字`, 'success');
+                }
             } else {
                 isAuthenticated = false;
+                currentPassword = '';
+                currentConfig = null;
                 authStatus.classList.remove('ready');
                 authStatusText.textContent = password ? '密码错误' : '未验证';
+                quotaInfo.textContent = '';
             }
             
             checkOptimizeButton();
@@ -663,8 +695,29 @@ Text to Revise:
         // 检查优化按钮状态
         function checkOptimizeButton() {
             const hasAuth = isAuthenticated;
-            const hasText = originalTextArea.value.trim().length >= 50;
-            optimizeBtn.disabled = !(hasAuth && hasText);
+            const text = originalTextArea.value.trim();
+            const hasText = text.length >= 50;
+            
+            // 检查字数是否超过当前密码限制
+            let exceedsLimit = false;
+            if (currentConfig && text.length > 0) {
+                const remaining = currentConfig.limit - currentConfig.used;
+                exceedsLimit = text.length > remaining;
+            }
+            
+            optimizeBtn.disabled = !(hasAuth && hasText && !exceedsLimit);
+            
+            // 更新按钮文本提示
+            if (exceedsLimit) {
+                const remaining = currentConfig.limit - currentConfig.used;
+                optimizeBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> 超出剩余字数限制 (${remaining}字)`;
+            } else if (!hasAuth) {
+                optimizeBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> 请先验证密码';
+            } else if (!hasText) {
+                optimizeBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> 请输入至少50字符';
+            } else {
+                optimizeBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> 开始优化';
+            }
         }
 
         // 开始优化
@@ -681,6 +734,13 @@ Text to Revise:
                 return;
             }
 
+            // 检查字数限制
+            const remaining = currentConfig.limit - currentConfig.used;
+            if (text.length > remaining) {
+                showNotification(`文本长度(${text.length}字)超过剩余额度(${remaining}字)`, 'error');
+                return;
+            }
+
             // 设置加载状态
             setOptimizeLoading(true);
             
@@ -691,11 +751,26 @@ Text to Revise:
                 const result = await callGeminiAPI(API_KEY, prompt);
                 
                 if (result.success) {
+                    // 更新使用字数
+                    currentConfig.used += text.length;
+                    savePasswordUsage();
+                    
+                    // 更新显示
+                    const newRemaining = currentConfig.limit - currentConfig.used;
+                    quotaInfo.textContent = `(剩余 ${newRemaining}/${currentConfig.limit} 字)`;
+                    
                     optimizedTextArea.value = result.text;
                     updateStats();
                     showResultActions();
                     showImprovements(text, result.text);
-                    showNotification('优化完成！', 'success');
+                    
+                    if (newRemaining <= 0) {
+                        showNotification('优化完成！该密码额度已用完', 'warning');
+                        // 重新检查按钮状态
+                        checkAuthentication();
+                    } else {
+                        showNotification(`优化完成！剩余${newRemaining}字额度`, 'success');
+                    }
                 } else {
                     showNotification(result.error, 'error');
                 }
